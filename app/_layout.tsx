@@ -1,39 +1,34 @@
 import '../global.css'
 
-import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { useSession } from '@/contexts/AuthContext';
 
-import { Provider } from 'react-redux'
-import { RootState } from '@/state/store';
+import { SessionProvider } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
-import 'react-native-reanimated';
+export default function Root() {
+  return (
+    <SessionProvider>
+      <RootNavigator />
+    </SessionProvider>
+  )
+}
 
-export default function RootLayout() {
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  if (!loaded) {
-    // Async font loading only occurs in development.
-    return null;
-  }
-  const state = store.getState()
-  const loginState = state.login;
+function RootNavigator() {
+  const { token, getAuthToken } = useSession();
+  useEffect(() => {
+    (async () => { getAuthToken() })();
+  },)
 
   return (
-    <Provider store={store}>
-      <Stack>
-        {loginState ? (
-          <>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="+not-found" />
-          </>
-        ) : (
-          <Stack.Screen name="login" options={{ headerShown: false }} />
-        )}
-      </Stack>
-      <StatusBar style="auto" />
-    </Provider>
+    <Stack>
+      <Stack.Protected guard={token}>
+        <Stack.Screen name="temp" />
+      </Stack.Protected>
+
+      <Stack.Protected guard={!token}>
+        <Stack.Screen name="login" />
+      </Stack.Protected>
+    </Stack>
   )
 }

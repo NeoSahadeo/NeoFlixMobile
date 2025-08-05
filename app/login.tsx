@@ -1,14 +1,13 @@
 import { View, Text, Pressable, KeyboardAvoidingView, Platform, TouchableHighlight, Linking } from "react-native";
 import { useForm, Controller } from 'react-hook-form';
-import { useDispatch } from "react-redux";
-import { bindActionCreators } from "@reduxjs/toolkit";
-import { actionCreators } from "@/state";
 
 import * as SecureStore from 'expo-secure-store';
 import axios from "axios";
 
 import Logo from "@/components/icons/Logo"
 import ThemedTextInput from "@/components/form/TextInput"
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 
 function needHelp() {
 	Linking.openURL('https://example.com');
@@ -17,8 +16,6 @@ function needHelp() {
 
 export default function LoginScreen() {
 	const { control, handleSubmit } = useForm();
-	const dispatch = useDispatch()
-	const { loginAction } = bindActionCreators(actionCreators, dispatch)
 
 	async function login(data: any) {
 		if (!data.password || !data.serverAddress || !data.username) return;
@@ -37,12 +34,13 @@ export default function LoginScreen() {
 			})
 			if (response.status == 200) {
 				await SecureStore.setItemAsync("loginToken", response.data["access_token"])
-				loginAction(true)
+				await AsyncStorage.setItem("backendServer", data.serverAddress)
 			}
 		} catch (error) {
 			console.log('Login error:', error);
 		}
 	}
+
 	return (
 		<KeyboardAvoidingView
 			behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
