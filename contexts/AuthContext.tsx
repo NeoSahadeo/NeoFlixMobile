@@ -26,7 +26,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
       setAuthToken: setAuthToken,
       getAuthToken: async () => {
         const token = await SecureStore.getItemAsync("loginToken")
-        const serverAddress = await AsyncStorage.getItem("backendServer")
+        const serverAddress = await AsyncStorage.getItem("backendAddress")
         // get tmdb token to verify if self-token is valid.
         const response = await axios.get(serverAddress + "/tmdb_apikey", {
           headers: {
@@ -45,8 +45,30 @@ export function SessionProvider({ children }: PropsWithChildren) {
         setAuthToken(tmdbApikey)
         setApiKey(tmdbApikey)
       },
-      logout: () => {
+      logout: async () => {
+        const token = await SecureStore.getItemAsync("loginToken")
+        const backendAddress = await AsyncStorage.getItem("backendAddress")
+        await axios.get(backendAddress + "/logout", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        })
+        await SecureStore.deleteItemAsync("loginToken")
+        await SecureStore.deleteItemAsync("tmdbApiKey")
+        setApiKey(null)
       },
+      logoutall: async () => {
+        const token = await SecureStore.getItemAsync("loginToken")
+        const backendAddress = await AsyncStorage.getItem("backendAddress")
+        await axios.get(backendAddress + "/logoutall", {
+          headers: {
+            "Authorization": "Bearer " + token
+          }
+        })
+        await SecureStore.deleteItemAsync("loginToken")
+        await SecureStore.deleteItemAsync("tmdbApiKey")
+        setApiKey(null)
+      }
     }}>
       {children}
     </AuthContext>

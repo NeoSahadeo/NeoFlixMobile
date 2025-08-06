@@ -8,7 +8,7 @@ type Props = {
 const ThemedTextInput = ({ placeholder, ...rest }: Props) => {
 	return (
 		<TextInput
-			style={{ color: "white" }}
+			style={{ color: "white", borderWidth: 1, borderRadius: 30, paddingLeft: 10 }}
 			placeholder={placeholder}
 			placeholderTextColor="#999"
 			{...rest}

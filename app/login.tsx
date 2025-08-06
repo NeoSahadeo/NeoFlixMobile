@@ -9,6 +9,7 @@ import Logo from "@/components/icons/Logo"
 import ThemedTextInput from "@/components/form/TextInput"
 
 import { useSession } from '@/contexts/AuthContext';
+import { useEffect, useState } from "react";
 
 function needHelp() {
 	Linking.openURL('https://example.com');
@@ -19,12 +20,21 @@ export default function LoginScreen() {
 	const { control, handleSubmit } = useForm();
 	const { getAuthToken } = useSession();
 
+	const [backendAddress, setBackendAddress] = useState("");
+
+	useEffect(() => {
+		(async () => {
+			const b = await AsyncStorage.getItem("backendAddress") ?? ""
+			setBackendAddress(b)
+		})()
+	}, [])
+
 	async function login(data: any) {
-		if (!data.password || !data.serverAddress || !data.username) return;
+		if (!data.password || !backendAddress || !data.username) return;
 
 		try {
 			const response = await axios({
-				url: data.serverAddress + "/token",
+				url: backendAddress + "/token",
 				method: "POST",
 				headers: {
 					'Content-Type': 'application/x-www-form-urlencoded'
@@ -36,7 +46,7 @@ export default function LoginScreen() {
 			})
 			if (response.status == 200) {
 				await SecureStore.setItemAsync("loginToken", response.data["access_token"])
-				await AsyncStorage.setItem("backendServer", data.serverAddress)
+				await AsyncStorage.setItem("backendAddress", backendAddress)
 				getAuthToken();
 
 			}
@@ -66,7 +76,7 @@ export default function LoginScreen() {
 					control={control}
 					name="serverAddress"
 					render={({ field: { onChange, onBlur, value } }) => (
-						<ThemedTextInput placeholder='Server Address' onChangeText={onChange} onBlur={onBlur} value={value} />
+						<ThemedTextInput placeholder='Server Address' onChangeText={setBackendAddress} onBlur={onBlur} value={backendAddress} />
 					)}
 				/>
 				<Controller

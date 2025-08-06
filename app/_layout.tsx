@@ -18,12 +18,13 @@ function RootNavigator() {
   const { apiKey, getAuthToken } = useSession();
   useEffect(() => {
     (async () => { getAuthToken() })();
-  },)
+  }, [])
 
   return (
     <Stack>
       <Stack.Protected guard={apiKey}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="viewer" options={{ headerShown: false }} />
       </Stack.Protected>
 
       <Stack.Screen name="+not-found.tsx" options={{ headerShown: false }} />
