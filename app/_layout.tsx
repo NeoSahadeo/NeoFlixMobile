@@ -15,19 +15,21 @@ export default function Root() {
 }
 
 function RootNavigator() {
-  const { token, getAuthToken } = useSession();
+  const { apiKey, getAuthToken } = useSession();
   useEffect(() => {
     (async () => { getAuthToken() })();
   },)
 
   return (
     <Stack>
-      <Stack.Protected guard={token}>
-        <Stack.Screen name="temp" />
+      <Stack.Protected guard={apiKey}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack.Protected>
 
-      <Stack.Protected guard={!token}>
-        <Stack.Screen name="login" />
+      <Stack.Screen name="+not-found.tsx" options={{ headerShown: false }} />
+
+      <Stack.Protected guard={!apiKey}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>
   )

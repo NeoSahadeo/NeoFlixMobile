@@ -1,13 +1,14 @@
 import { View, Text, Pressable, KeyboardAvoidingView, Platform, TouchableHighlight, Linking } from "react-native";
 import { useForm, Controller } from 'react-hook-form';
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from 'expo-secure-store';
 import axios from "axios";
 
 import Logo from "@/components/icons/Logo"
 import ThemedTextInput from "@/components/form/TextInput"
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
+import { useSession } from '@/contexts/AuthContext';
 
 function needHelp() {
 	Linking.openURL('https://example.com');
@@ -16,6 +17,7 @@ function needHelp() {
 
 export default function LoginScreen() {
 	const { control, handleSubmit } = useForm();
+	const { getAuthToken } = useSession();
 
 	async function login(data: any) {
 		if (!data.password || !data.serverAddress || !data.username) return;
@@ -35,6 +37,8 @@ export default function LoginScreen() {
 			if (response.status == 200) {
 				await SecureStore.setItemAsync("loginToken", response.data["access_token"])
 				await AsyncStorage.setItem("backendServer", data.serverAddress)
+				getAuthToken();
+
 			}
 		} catch (error) {
 			console.log('Login error:', error);

@@ -1,10 +1,10 @@
 import { use, createContext, type PropsWithChildren, useState } from 'react';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from 'axios';
 
 const AuthContext = createContext<any>({});
 
-// This hook can be used to access the user info.
 export function useSession() {
   const value = use(AuthContext);
   if (!value) {
@@ -14,23 +14,36 @@ export function useSession() {
   return value;
 }
 
+async function setAuthToken(value: string) {
+  await SecureStore.setItemAsync("tmdbApiKey", value)
+}
+
 export function SessionProvider({ children }: PropsWithChildren) {
-  const [token, setToken] = useState<boolean>(false);
+  const [apiKey, setApiKey] = useState<string | null>(null);
   return (
     <AuthContext value={{
-      token,
-      setAuthToken: () => {
-        console.log('setting tokens!')
-      },
+      apiKey,
+      setAuthToken: setAuthToken,
       getAuthToken: async () => {
         const token = await SecureStore.getItemAsync("loginToken")
+        const serverAddress = await AsyncStorage.getItem("backendServer")
         // get tmdb token to verify if self-token is valid.
-        axios.get("")
-        if (token) {
-          setToken(true)
-        } else {
-          setToken(false)
-        }
+        const response = await axios.get(serverAddress + "/tmdb_apikey", {
+          headers: {
+            "Authorization": "Bearer " + token,
+          }
+        })
+        if (response.status != 200) return
+
+        const tmdbApikey = response.data["access_token"]
+        if (!tmdbApikey) {
+          setApiKey(null)
+          await SecureStore.deleteItemAsync("tmdbApiKey")
+          return
+        };
+
+        setAuthToken(tmdbApikey)
+        setApiKey(tmdbApikey)
       },
       logout: () => {
       },
