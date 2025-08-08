@@ -58,7 +58,7 @@ export default function HomePage() {
 					// console.log(item)
 					return (
 						<Pressable onPress={() => {
-							router.navigate(`/viewer/${item.id}`)
+							router.navigate(`/viewer/${item.media_type}/${item.id}`)
 						}}>
 							<DefaultPoster colSize={colSize} src={item.poster_path} />
 						</Pressable>

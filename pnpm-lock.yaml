@@ -72,8 +72,8 @@ importers:
         specifier: ^4.1.23
         version: 4.1.23(react-native-reanimated@3.17.5(@babel/core@7.28.0)(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-safe-area-context@5.4.0(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native-svg@15.12.1(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0))(react-native@0.79.5(@babel/core@7.28.0)(@types/react@19.0.14)(react@19.0.0))(react@19.0.0)(tailwindcss@3.4.17)
       radson:
-        specifier: ^1.0.36
-        version: 1.0.36
+        specifier: 1.0.38
+        version: 1.0.38
       react:
         specifier: 19.0.0
         version: 19.0.0
@@ -4012,8 +4012,8 @@ packages:
   queue@6.0.2:
     resolution: {integrity: sha512-iHZWu+q3IdFZFX36ro/lKBkSvfkztY5Y7HMiPlOUjhupPcG2JMfst2KKEpu5XndviX/3UhFbRngUPNKtgvtZiA==}
 
-  radson@1.0.36:
-    resolution: {integrity: sha512-wGFUUiakb1YuA/0sqqefmnRXPW4mvTk61LhkB9gG+V7IczdWiX0Qb1k2DEN8u1KX3CnJxJwnmaxiOlicYYgw4w==}
+  radson@1.0.38:
+    resolution: {integrity: sha512-OWhSTHgIevOfWCWuE8tBMmewDzMIFWOAL/NXxmwJnh2brUEcADUrAnQt58diBcLG66uMlXmX09ytdwWtGaUAjQ==}
 
   randombytes@2.1.0:
     resolution: {integrity: sha512-vYl3iOX+4CKUWuxGi9Ukhie6fsqXqS9FE2Zaic4tNFD2N2QQaXOMFbuKK4QmDHC0JO6B1Zp41J0LpT0oR68amQ==}
@@ -9912,7 +9912,7 @@ snapshots:
     dependencies:
       inherits: 2.0.4
 
-  radson@1.0.36:
+  radson@1.0.38:
     dependencies:
       '@types/axios': 0.14.4
       axios: 1.11.0
