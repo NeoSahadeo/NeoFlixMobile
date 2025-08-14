@@ -1,7 +1,8 @@
 import { Image } from "expo-image"
 import { resolveImage } from "@/scripts/urlUtils"
+import { Text, View } from "react-native"
 
-export default ({ src, colSize }: any) => {
+export default ({ src, colSize, alt }: any) => {
 	return (
 		<Image
 			source={resolveImage(src, "small")}

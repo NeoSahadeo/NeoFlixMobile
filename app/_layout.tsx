@@ -1,5 +1,7 @@
 import '../global.css'
 
+import { LogBox } from 'react-native';
+
 import { Stack } from 'expo-router';
 import { useSession } from '@/contexts/AuthContext';
 
@@ -35,3 +37,7 @@ function RootNavigator() {
     </Stack>
   )
 }
+
+LogBox.ignoreLogs([
+  'VirtualizedLists should never be nested inside plain ScrollViews',
+]);

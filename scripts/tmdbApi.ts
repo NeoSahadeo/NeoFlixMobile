@@ -27,3 +27,42 @@ export async function fetchTrending(
 	}
 	return null;
 }
+export async function search(
+	apiKey: string,
+	query: string,
+	page: number = 1,
+): Promise<{ tv: JSON; movie: JSON } | null> {
+	try {
+		const tv_response = await fetch(
+			TMDB_API + "search/tv?query=" + query + "&page=" + page,
+			{
+				method: "GET",
+				headers: {
+					accept: "application/json",
+					Authorization: `Bearer ${apiKey}`,
+				},
+			},
+		);
+		const movie_response = await fetch(
+			TMDB_API + "search/movie?query=" + query + "&page=" + page,
+			{
+				method: "GET",
+				headers: {
+					accept: "application/json",
+					Authorization: `Bearer ${apiKey}`,
+				},
+			},
+		);
+		if (tv_response.ok && movie_response.ok) {
+			const tv_json = await tv_response.json();
+			const movie_json = await movie_response.json();
+			return {
+				tv: tv_json,
+				movie: movie_json,
+			};
+		}
+	} catch (err) {
+		console.log(err);
+		return null;
+	}
+}
