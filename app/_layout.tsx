@@ -1,43 +1,47 @@
 import '../global.css'
 
-import { LogBox } from 'react-native';
+import { LogBox } from 'react-native'
 
-import { Stack } from 'expo-router';
-import { useSession } from '@/contexts/AuthContext';
+import { Stack } from 'expo-router'
+import { useSession, SessionProvider } from '@/contexts/AuthContext'
 
-import { SessionProvider } from '@/contexts/AuthContext';
-import { useEffect } from 'react';
+import { useEffect } from 'react'
 
 export default function Root() {
-  return (
-    <SessionProvider>
-      <RootNavigator />
-    </SessionProvider>
-  )
+    return (
+        <SessionProvider>
+            <RootNavigator />
+        </SessionProvider>
+    )
 }
 
 function RootNavigator() {
-  const { apiKey, getAuthToken } = useSession();
-  useEffect(() => {
-    (async () => { getAuthToken() })();
-  }, [])
+    const { apiKey, getAuthToken } = useSession()
+    useEffect(() => {
+        ;(async () => {
+            getAuthToken()
+        })()
+    }, [])
 
-  return (
-    <Stack>
-      <Stack.Protected guard={apiKey}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="viewer" options={{ headerShown: false }} />
-      </Stack.Protected>
+    return (
+        <Stack>
+            <Stack.Protected guard={apiKey}>
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="viewer" options={{ headerShown: false }} />
+            </Stack.Protected>
 
-      <Stack.Screen name="+not-found.tsx" options={{ headerShown: false }} />
+            <Stack.Screen
+                name="+not-found.tsx"
+                options={{ headerShown: false }}
+            />
 
-      <Stack.Protected guard={!apiKey}>
-        <Stack.Screen name="login" options={{ headerShown: false }} />
-      </Stack.Protected>
-    </Stack>
-  )
+            <Stack.Protected guard={!apiKey}>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+            </Stack.Protected>
+        </Stack>
+    )
 }
 
 LogBox.ignoreLogs([
-  'VirtualizedLists should never be nested inside plain ScrollViews',
-]);
+    'VirtualizedLists should never be nested inside plain ScrollViews',
+])
