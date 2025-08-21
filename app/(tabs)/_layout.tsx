@@ -1,18 +1,22 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome'
 import { Tabs } from 'expo-router'
 import SolarFireBold from '@/components/icons/SolarFireBold'
+import { BlurView } from '@react-native-community/blur'
 
 import Colors from '@/styles/Colors'
 import { useWindowDimensions } from 'react-native'
+import { Downloads } from '@/components/icons/Downloads'
+import { Queue } from '@/components/icons/Queue'
 
 export default function TabLayout() {
     const { width } = useWindowDimensions()
     return (
         <Tabs
+            initialRouteName="queue"
             screenOptions={{
                 tabBarActiveTintColor: '#36909D',
                 tabBarStyle: {
-                    backgroundColor: Colors.backgroundPrimary,
+                    backgroundColor: `${Colors.backgroundPrimary}A0`,
                     borderWidth: 0,
                     borderTopWidth: 0,
                     height: 65,
@@ -26,16 +30,6 @@ export default function TabLayout() {
             }}
         >
             <Tabs.Screen
-                name="index"
-                options={{
-                    title: 'Home',
-                    headerShown: false,
-                    tabBarIcon: ({ color }) => (
-                        <FontAwesome size={28} name="home" color={color} />
-                    ),
-                }}
-            />
-            <Tabs.Screen
                 name="trending"
                 options={{
                     title: 'Trending',
@@ -46,12 +40,22 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
-                name="settings"
+                name="queue"
                 options={{
-                    title: 'Settings',
+                    title: 'Queue',
                     headerShown: false,
                     tabBarIcon: ({ color }) => (
-                        <FontAwesome size={28} name="cog" color={color} />
+                        <Queue size={28} color={color} />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="downloads"
+                options={{
+                    title: 'Downloads',
+                    headerShown: false,
+                    tabBarIcon: ({ color }) => (
+                        <Downloads size={28} color={color} />
                     ),
                 }}
             />

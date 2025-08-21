@@ -4,23 +4,67 @@ import { LogBox } from 'react-native'
 
 import { Stack } from 'expo-router'
 import { useSession, SessionProvider } from '@/contexts/AuthContext'
-
+import {
+    useSession as radsonUseSession,
+    SessionProvider as RadsonSessionProvider,
+} from '@/contexts/RadsonContext'
 import { useEffect } from 'react'
+
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import * as SecureStore from 'expo-secure-store'
+
+import { Radson } from 'radson'
 
 export default function Root() {
     return (
         <SessionProvider>
-            <RootNavigator />
+            <RadsonSessionProvider>
+                <RootNavigator />
+            </RadsonSessionProvider>
         </SessionProvider>
     )
 }
 
 function RootNavigator() {
     const { apiKey, getAuthToken } = useSession()
+    const { setRadson } = radsonUseSession()
+
     useEffect(() => {
-        ;(async () => {
+        ; (async () => {
             getAuthToken()
         })()
+            ; (async () => {
+                try {
+                    const sonarr_address =
+                        (await AsyncStorage.getItem('sonarrAddress')) ??
+                        'http://127.0.0.1:0000'
+                    const sonarr_api_key =
+                        (await SecureStore.getItemAsync('sonarrApiKey')) ?? ''
+                    const radarr_address =
+                        (await AsyncStorage.getItem('radarrAddress')) ??
+                        'http://127.0.0.1:0000'
+                    const radarr_api_key =
+                        (await SecureStore.getItemAsync('radarrApiKey')) ?? ''
+
+                    // console.log({
+                    //     sonarr_address,
+                    //     sonarr_api_key,
+                    //     radarr_address,
+                    //     radarr_api_key,
+                    // })
+
+                    setRadson(
+                        new Radson({
+                            sonarr_address,
+                            sonarr_api_key,
+                            radarr_address,
+                            radarr_api_key,
+                        })
+                    )
+                } catch (error) {
+                    console.error('Error loading data:', error)
+                }
+            })()
     }, [])
 
     return (
