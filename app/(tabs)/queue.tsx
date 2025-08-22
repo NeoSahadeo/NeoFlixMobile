@@ -1,9 +1,17 @@
 import { useSession } from '@/contexts/RadsonContext'
 import Colors from '@/styles/Colors'
 import { useCallback, useEffect, useState } from 'react'
+import { StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import { View, Text, ScrollView, FlatList, Pressable } from 'react-native'
+import {
+	View,
+	Text,
+	ScrollView,
+	FlatList,
+	Pressable,
+	Modal,
+} from 'react-native'
 import { Radson } from 'radson'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
@@ -12,7 +20,7 @@ import SwipableListItem from '@/components/inputs/SwipableListItem'
 import { Downloads } from '@/components/icons/Downloads'
 import { TrashcanIcon } from '@/components/icons/Trashcan'
 
-export default function() {
+export default function QueueView() {
 	const { radson }: { radson: Radson } = useSession()
 
 	const [movieRecords, setMovieRecords] = useState<any>([])
@@ -68,7 +76,11 @@ export default function() {
 	// useEffect(() => {
 	// 	console.log(Object.keys(seriesDataSet))
 	// }, [seriesDataSet])
-
+	const [modalData, setModalData] = useState({
+		visible: false,
+		title: '',
+		type: '' as 'tv' | 'movie',
+	})
 	return (
 		<SafeAreaView
 			style={{
@@ -77,14 +89,62 @@ export default function() {
 			}}
 			className="px-2"
 		>
-			<GestureHandlerRootView>
-				<ScrollView>
+			<View className="absolute">
+				<Modal
+					animationType="slide"
+					transparent={true}
+					visible={modalData.visible}
+					onRequestClose={() => {
+						modalData.visible = false
+						setModalData({
+							...modalData,
+						})
+					}}
+				>
+					<View style={styles.centeredView}>
+						<View
+							style={styles.modalView}
+							className="flex flex-col gap-3"
+						>
+							<Text className="text-black font-black text-xl">
+								{modalData.title}
+							</Text>
+							<Pressable className="bg-blue-400 rounded-full">
+								<Text className="text-white text-lg px-3 py-2 font-bold">
+									Start Interactive Search
+								</Text>
+							</Pressable>
+							{modalData.type === 'tv' && (
+								<Pressable className="bg-blue-400 rounded-full">
+									<Text className="text-white text-lg px-3 py-2 font-bold">
+										View Requested Episodes
+									</Text>
+								</Pressable>
+							)}
+							<Pressable
+								style={[styles.button, styles.buttonClose]}
+								onPress={() => {
+									modalData.visible = false
+									setModalData({
+										...modalData,
+									})
+								}}
+							>
+								<Text style={styles.textStyle}>Dismiss</Text>
+							</Pressable>
+						</View>
+					</View>
+				</Modal>
+			</View>
+			<ScrollView>
+				<GestureHandlerRootView>
 					{movieRecords?.length > 0 && (
 						<>
 							<Text className="text-white text-3xl font-bold mb-3">
 								Requested Movies
 							</Text>
 							<FlatList
+								ListHeaderComponent={() => <Text>Hello</Text>}
 								data={movieRecords}
 								key={`movieRecords-${Math.random()}`}
 								keyExtractor={(e) => e['tmdbId']}
@@ -105,12 +165,14 @@ export default function() {
 					)}
 					{seriesRecords?.length > 0 && (
 						<>
-							<Text className="text-white text-3xl font-bold my-3">
-								Requested Series
-							</Text>
 							<FlatList
+								scrollEnabled={true}
+								ListHeaderComponent={() => (
+									<Text className="text-white text-3xl font-bold my-3">
+										Requested Series
+									</Text>
+								)}
 								data={Object.values(seriesDataSet)}
-								key={`seriesRecords-${Math.random()}`}
 								keyExtractor={(e: any) => e['tmdbId']}
 								renderItem={({ item }: any) => {
 									const size = 50
@@ -125,9 +187,11 @@ export default function() {
 										<>
 											<Pressable
 												onLongPress={() => {
-													console.log(
-														'starting interactive search'
-													)
+													setModalData({
+														visible: true,
+														type: 'tv',
+														title: item['title'],
+													})
 												}}
 												onPress={() => {
 													router.navigate(
@@ -183,8 +247,52 @@ export default function() {
 							/>
 						</>
 					)}
-				</ScrollView>
-			</GestureHandlerRootView>
+				</GestureHandlerRootView>
+				<View className="flex-1 h-24 bg-transparent"></View>
+			</ScrollView>
 		</SafeAreaView>
 	)
 }
+
+const styles = StyleSheet.create({
+	centeredView: {
+		flex: 1,
+		justifyContent: 'center',
+		alignItems: 'center',
+	},
+	modalView: {
+		margin: 20,
+		backgroundColor: 'white',
+		borderRadius: 20,
+		padding: 35,
+		alignItems: 'center',
+		shadowColor: '#000',
+		shadowOffset: {
+			width: 0,
+			height: 2,
+		},
+		shadowOpacity: 0.25,
+		shadowRadius: 4,
+		elevation: 5,
+	},
+	button: {
+		borderRadius: 20,
+		padding: 10,
+		elevation: 2,
+	},
+	buttonOpen: {
+		backgroundColor: '#F194FF',
+	},
+	buttonClose: {
+		backgroundColor: '#2196F3',
+	},
+	textStyle: {
+		color: 'white',
+		fontWeight: 'bold',
+		textAlign: 'center',
+	},
+	modalText: {
+		marginBottom: 15,
+		textAlign: 'center',
+	},
+})

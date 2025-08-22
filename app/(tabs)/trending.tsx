@@ -174,7 +174,7 @@ export default function HomePage() {
                     </Text>
                 </View>
             )}
-            <View className="w-full h-28 bg-transparent"></View>
+            {/* <View className="w-full h-28 bg-transparent"></View> */}
         </SafeAreaView>
     )
 }

@@ -14,14 +14,18 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import * as SecureStore from 'expo-secure-store'
 
 import { Radson } from 'radson'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { StatusBar } from 'expo-status-bar'
 
 export default function Root() {
     return (
-        <SessionProvider>
-            <RadsonSessionProvider>
-                <RootNavigator />
-            </RadsonSessionProvider>
-        </SessionProvider>
+        <SafeAreaProvider>
+            <SessionProvider>
+                <RadsonSessionProvider>
+                    <RootNavigator />
+                </RadsonSessionProvider>
+            </SessionProvider>
+        </SafeAreaProvider>
     )
 }
 
@@ -68,21 +72,28 @@ function RootNavigator() {
     }, [])
 
     return (
-        <Stack>
-            <Stack.Protected guard={apiKey}>
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="viewer" options={{ headerShown: false }} />
-            </Stack.Protected>
+        <>
+            <StatusBar style="auto" />
+            <Stack>
+                <Stack.Protected guard={apiKey}>
+                    <Stack.Screen
+                        name="(tabs)"
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="viewer"
+                        options={{ headerShown: false }}
+                    />
+                </Stack.Protected>
 
-            <Stack.Screen
-                name="+not-found.tsx"
-                options={{ headerShown: false }}
-            />
-
-            <Stack.Protected guard={!apiKey}>
-                <Stack.Screen name="login" options={{ headerShown: false }} />
-            </Stack.Protected>
-        </Stack>
+                <Stack.Protected guard={!apiKey}>
+                    <Stack.Screen
+                        name="login"
+                        options={{ headerShown: false }}
+                    />
+                </Stack.Protected>
+            </Stack>
+        </>
     )
 }
 
