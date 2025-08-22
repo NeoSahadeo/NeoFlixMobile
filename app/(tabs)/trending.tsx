@@ -2,12 +2,12 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import {
     FlatList,
     Pressable,
-    ScrollView,
+    Text,
     TextInput,
     useWindowDimensions,
     View,
 } from 'react-native'
-import { useEffect, useState, useMemo } from 'react'
+import { useEffect, useState, useMemo, useRef } from 'react'
 import Colors from '@/styles/Colors'
 import { fetchTrending, search as searchTMDB } from '@/scripts/tmdbApi'
 import { useSession } from '@/contexts/AuthContext'
@@ -35,13 +35,22 @@ export default function HomePage() {
         // delay in ms
         1000
     )
-    // const [page, page] = useState<"tv"|"movie">("tv")
+
+    const [isRefreshing, setIsRefreshing] = useState(false)
+    const [page, setPage] = useState(1)
+    const flatListRef = useRef(null)
 
     useMemo(() => {
         if (!search) {
             ; (async () => {
-                const r = await fetchTrending(apiKey, trendingType, timeWindow)
-                if (r) setPosters(r.results)
+                const r = await fetchTrending(
+                    apiKey,
+                    trendingType,
+                    timeWindow,
+                    page
+                )
+                if (r) setPosters((v) => [...v, ...r.results])
+                setIsRefreshing(false)
             })()
         } else {
             ; (async () => {
@@ -63,11 +72,20 @@ export default function HomePage() {
                     arr.push(...r?.tv.results, ...r?.movie.results)
                 }
                 arr = arr.filter((e) => typeof e.poster_path == 'string') // removes non poster path elements
-                setPosters(arr)
+                // fix this
+                setPosters((v) => {
+                    if (
+                        v.length !== arr.length ||
+                        !v.every((val, i) => val === arr[i])
+                    ) {
+                        return [...v, ...arr]
+                    }
+                    return v // no change if arrays are equal
+                })
+                setIsRefreshing(false)
             })()
         }
-        console.log(search)
-    }, [timeWindow, trendingType, search])
+    }, [timeWindow, trendingType, search, page])
 
     const { width } = useWindowDimensions()
     const [numColumns, setNumColumns] = useState(2)
@@ -80,6 +98,12 @@ export default function HomePage() {
 
         setColSize(Math.floor(width / numColumns))
     }, [width])
+
+    useEffect(() => {
+        setPage(1)
+        setPosters([])
+        flatListRef.current.scrollToOffset({ offset: 0, animated: true })
+    }, [trendingType, timeWindow, search])
 
     return (
         <SafeAreaView
@@ -110,35 +134,47 @@ export default function HomePage() {
                     />
                 </View>
             </View>
-            <ScrollView>
-                <FlatList
-                    data={posters}
-                    key={`flatlist-${Math.random()}`} // key forces full re-render on numColumns change
-                    keyExtractor={(e: any) => e.poster_path}
-                    renderItem={({ item }) => {
-                        if (typeof item.poster_path !== 'string') return
-                        return (
-                            <Pressable
-                                onPress={() => {
-                                    console.log(typeof item.poster_path)
-                                    // console.log(item.media_type, item.id, item.poster_path, item)
-                                    router.navigate(
-                                        `/viewer/${item.media_type}/${item.id}`
-                                    )
-                                }}
-                            >
-                                <DefaultPoster
-                                    alt={item.title}
-                                    colSize={colSize}
-                                    src={item.poster_path}
-                                />
-                            </Pressable>
-                        )
-                    }}
-                    numColumns={numColumns}
-                />
-                <View className="w-full h-28 bg-transparent"></View>
-            </ScrollView>
+            <FlatList
+                ref={flatListRef}
+                data={posters}
+                scrollEnabled={true}
+                keyExtractor={(contact, index) => String(index)}
+                renderItem={({ item }) => {
+                    if (typeof item.poster_path !== 'string') return
+                    return (
+                        <Pressable
+                            onPress={() => {
+                                console.log(typeof item.poster_path)
+                                // console.log(item.media_type, item.id, item.poster_path, item)
+                                router.navigate(
+                                    `/viewer/${item.media_type}/${item.id}`
+                                )
+                            }}
+                        >
+                            <DefaultPoster
+                                alt={item.title}
+                                colSize={colSize}
+                                src={item.poster_path}
+                            />
+                        </Pressable>
+                    )
+                }}
+                numColumns={numColumns}
+                onEndReached={() => {
+                    console.log('end reached')
+                    setIsRefreshing(true)
+                    setPage(page + 1)
+                }}
+                onEndReachedThreshold={0.5}
+            />
+            {isRefreshing == true && (
+                <View className="w-full h-28 bg-transparent absolute bottom-10 flex-1 items-center">
+                    <Text className="text-white bg-blue-800 px-5 py-3 rounded-lg">
+                        Refreshing
+                    </Text>
+                </View>
+            )}
+            <View className="w-full h-28 bg-transparent"></View>
         </SafeAreaView>
     )
 }
