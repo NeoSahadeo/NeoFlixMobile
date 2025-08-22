@@ -4,7 +4,11 @@ import Animated, {
 	runOnJS,
 } from 'react-native-reanimated'
 
-import { Gesture, GestureDetector } from 'react-native-gesture-handler'
+import {
+	Gesture,
+	GestureDetector,
+	NativeGesture,
+} from 'react-native-gesture-handler'
 import { useWindowDimensions } from 'react-native'
 import Colors from '@/styles/Colors'
 import React, { ReactNode } from 'react'
@@ -30,6 +34,8 @@ export default function({
 
 	const translationX = useSharedValue(0)
 	const panGesture = Gesture.Pan()
+		.activeOffsetX([-10, 10]) // activate only if moved more than 10 pixels horizontally
+		.failOffsetY([-10, 10]) // fail if vertical movement is more than 10 pixels
 		.onUpdate((event) => {
 			translationX.value = event.translationX
 		})
@@ -64,7 +70,7 @@ export default function({
 							backgroundColor: Colors.backgroundPrimary,
 						},
 					]}
-					className="flex flex-row px-2 py-4 h-16 items-center rounded-lg relative z-50 gap-3"
+					className="flex flex-row px-2 py-4 h-20 items-center rounded-lg relative z-50 gap-3"
 				>
 					{children}
 				</Animated.View>

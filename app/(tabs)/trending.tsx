@@ -40,18 +40,15 @@ export default function HomePage() {
     const [page, setPage] = useState(1)
     const flatListRef = useRef(null)
 
+    const emptySearch = async () => {
+        const r = await fetchTrending(apiKey, trendingType, timeWindow, page)
+        if (r) setPosters((v) => [...v, ...r.results])
+        setIsRefreshing(false)
+    }
+
     useMemo(() => {
         if (!search) {
-            ; (async () => {
-                const r = await fetchTrending(
-                    apiKey,
-                    trendingType,
-                    timeWindow,
-                    page
-                )
-                if (r) setPosters((v) => [...v, ...r.results])
-                setIsRefreshing(false)
-            })()
+            ; (async () => await emptySearch())()
         } else {
             ; (async () => {
                 const r = (await searchTMDB(apiKey, search)) as any
@@ -73,15 +70,8 @@ export default function HomePage() {
                 }
                 arr = arr.filter((e) => typeof e.poster_path == 'string') // removes non poster path elements
                 // fix this
-                setPosters((v) => {
-                    if (
-                        v.length !== arr.length ||
-                        !v.every((val, i) => val === arr[i])
-                    ) {
-                        return [...v, ...arr]
-                    }
-                    return v // no change if arrays are equal
-                })
+                arr = arr.filter((value, index) => value !== posters[index])
+                setPosters(arr)
                 setIsRefreshing(false)
             })()
         }
@@ -100,6 +90,9 @@ export default function HomePage() {
     }, [width])
 
     useEffect(() => {
+        if (search.length == 0) {
+            ; (async () => await emptySearch())()
+        }
         setPage(1)
         setPosters([])
         flatListRef.current.scrollToOffset({ offset: 0, animated: true })
@@ -112,6 +105,13 @@ export default function HomePage() {
             }}
             className="flex-1 items-center"
         >
+            <Pressable
+                onPress={() => {
+                    router.navigate(`/settings`)
+                }}
+            >
+                <Text className="text-white text-xl">Settings</Text>
+            </Pressable>
             <View className="flex flex-row gap-3 my-3 pr-4 w-full">
                 <View className="flex flex-row items-center gap-2 pl-3  bg-blue-900 flex-1 rounded-full">
                     <SearchIcon size={24} color="white" />

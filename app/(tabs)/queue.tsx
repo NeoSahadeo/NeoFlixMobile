@@ -4,23 +4,18 @@ import { useCallback, useEffect, useState } from 'react'
 import { StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
-import {
-	View,
-	Text,
-	ScrollView,
-	FlatList,
-	Pressable,
-	Modal,
-} from 'react-native'
+import { View, Text, Pressable, Modal } from 'react-native'
 import { Radson } from 'radson'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import SwipableListItem from '@/components/inputs/SwipableListItem'
 import { Downloads } from '@/components/icons/Downloads'
 import { TrashcanIcon } from '@/components/icons/Trashcan'
+import { FlatList } from 'react-native-gesture-handler'
 
 export default function QueueView() {
+	const insets = useSafeAreaInsets()
 	const { radson }: { radson: Radson } = useSession()
 
 	const [movieRecords, setMovieRecords] = useState<any>([])
@@ -73,9 +68,6 @@ export default function QueueView() {
 		})()
 	}, [seriesRecords])
 
-	// useEffect(() => {
-	// 	console.log(Object.keys(seriesDataSet))
-	// }, [seriesDataSet])
 	const [modalData, setModalData] = useState({
 		visible: false,
 		title: '',
@@ -85,9 +77,8 @@ export default function QueueView() {
 		<SafeAreaView
 			style={{
 				backgroundColor: Colors.backgroundPrimary,
-				flex: 1,
 			}}
-			className="px-2"
+			className="px-2 flex-1"
 		>
 			<View className="absolute">
 				<Modal
@@ -136,120 +127,94 @@ export default function QueueView() {
 					</View>
 				</Modal>
 			</View>
-			<ScrollView>
-				<GestureHandlerRootView>
-					{movieRecords?.length > 0 && (
-						<>
-							<Text className="text-white text-3xl font-bold mb-3">
-								Requested Movies
-							</Text>
-							<FlatList
-								ListHeaderComponent={() => <Text>Hello</Text>}
-								data={movieRecords}
-								key={`movieRecords-${Math.random()}`}
-								keyExtractor={(e) => e['tmdbId']}
-								renderItem={({ item }) => {
-									console.log(item)
-									return (
-										<View>
-											<View className="bg-gray-800 flex flex-row px-2 py-4 rounded-lg my-1">
-												<Text className="text-white">
-													{item['title']}
-												</Text>
-											</View>
-										</View>
-									)
-								}}
-							/>
-						</>
-					)}
+			<GestureHandlerRootView>
+				<View className="flex-1">
 					{seriesRecords?.length > 0 && (
-						<>
-							<FlatList
-								scrollEnabled={true}
-								ListHeaderComponent={() => (
-									<Text className="text-white text-3xl font-bold my-3">
-										Requested Series
-									</Text>
-								)}
-								data={Object.values(seriesDataSet)}
-								keyExtractor={(e: any) => e['tmdbId']}
-								renderItem={({ item }: any) => {
-									const size = 50
-									const imageSrc = item['images']
-										.filter((e) =>
-											Object.keys(e).includes('coverType')
-										)
-										.filter(
-											(e) => e['coverType'] === 'poster'
-										)[0]['remoteUrl']
-									return (
-										<>
-											<Pressable
-												onLongPress={() => {
-													setModalData({
-														visible: true,
-														type: 'tv',
-														title: item['title'],
-													})
+						<FlatList
+							scrollEnabled={true}
+							nestedScrollEnabled={true}
+							contentContainerStyle={{
+								paddingBottom: insets.bottom + 80,
+							}}
+							ListHeaderComponent={() => (
+								<Text className="text-white text-3xl font-bold my-3">
+									Requested Series
+								</Text>
+							)}
+							data={Object.values(seriesDataSet)}
+							keyExtractor={(e: any) => e['tmdbId']}
+							renderItem={({ item }: any) => {
+								const size = 50
+								const imageSrc = item['images']
+									.filter((e) =>
+										Object.keys(e).includes('coverType')
+									)
+									.filter(
+										(e) => e['coverType'] === 'poster'
+									)[0]['remoteUrl']
+								return (
+									<>
+										<Pressable
+											onLongPress={() => {
+												setModalData({
+													visible: true,
+													type: 'tv',
+													title: item['title'],
+												})
+											}}
+											onPress={() => {
+												router.navigate(
+													`/viewer/tv/${item['tmdbId']}`
+												)
+											}}
+										>
+											<SwipableListItem
+												leftCallback={() => {
+													console.log('deleting item')
 												}}
-												onPress={() => {
-													router.navigate(
-														`/viewer/tv/${item['tmdbId']}`
+												rightCallback={() => {
+													console.log(
+														'starting download item'
 													)
 												}}
+												leftView={
+													<View className="bg-red-500 w-32 h-full rounded-lg absolute top-0 left-0  flex items-start justify-center pl-4">
+														<TrashcanIcon
+															size={32}
+															color="white"
+														/>
+													</View>
+												}
+												rightView={
+													<View className="bg-green-500 w-32 h-full rounded-lg absolute top-0 right-0 flex items-end justify-center pr-4">
+														<Downloads
+															size={32}
+															color="white"
+														/>
+													</View>
+												}
 											>
-												<SwipableListItem
-													leftCallback={() => {
-														console.log(
-															'deleting item'
-														)
+												<Image
+													source={imageSrc}
+													contentFit="cover"
+													style={{
+														width: size,
+														height: size,
+														borderRadius: 4,
 													}}
-													rightCallback={() => {
-														console.log(
-															'starting download item'
-														)
-													}}
-													leftView={
-														<View className="bg-red-500 w-32 h-full rounded-lg absolute top-0 left-0  flex items-start justify-center pl-4">
-															<TrashcanIcon
-																size={32}
-																color="white"
-															/>
-														</View>
-													}
-													rightView={
-														<View className="bg-green-500 w-32 h-full rounded-lg absolute top-0 right-0 flex items-end justify-center pr-4">
-															<Downloads
-																size={32}
-																color="white"
-															/>
-														</View>
-													}
-												>
-													<Image
-														source={imageSrc}
-														contentFit="cover"
-														style={{
-															width: size,
-															height: size,
-															borderRadius: 4,
-														}}
-													/>
-													<Text className="text-white text-lg">
-														{item['title']}
-													</Text>
-												</SwipableListItem>
-											</Pressable>
-										</>
-									)
-								}}
-							/>
-						</>
+												/>
+												<Text className="text-white text-lg">
+													{item['title']}
+												</Text>
+											</SwipableListItem>
+										</Pressable>
+									</>
+								)
+							}}
+						/>
 					)}
-				</GestureHandlerRootView>
-				<View className="flex-1 h-24 bg-transparent"></View>
-			</ScrollView>
+				</View>
+			</GestureHandlerRootView>
 		</SafeAreaView>
 	)
 }
