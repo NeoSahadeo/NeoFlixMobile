@@ -39,12 +39,12 @@ export default function HomePage() {
 
     useMemo(() => {
         if (!search) {
-            ;(async () => {
+            ; (async () => {
                 const r = await fetchTrending(apiKey, trendingType, timeWindow)
                 if (r) setPosters(r.results)
             })()
         } else {
-            ;(async () => {
+            ; (async () => {
                 const r = (await searchTMDB(apiKey, search)) as any
                 let arr = [] as any
                 r?.tv.results.forEach((e) => {
