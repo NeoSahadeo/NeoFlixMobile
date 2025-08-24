@@ -84,6 +84,10 @@ function RootNavigator() {
                         name="viewer"
                         options={{ headerShown: false }}
                     />
+                    <Stack.Screen
+                        name="episodeView"
+                        options={{ headerShown: false }}
+                    />
                 </Stack.Protected>
 
                 <Stack.Protected guard={!apiKey}>

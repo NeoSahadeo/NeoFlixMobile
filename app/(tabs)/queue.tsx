@@ -1,6 +1,6 @@
 import { useSession } from '@/contexts/RadsonContext'
 import Colors from '@/styles/Colors'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useMemo } from 'react'
 import { StyleSheet } from 'react-native'
 import { Image } from 'expo-image'
 import { router } from 'expo-router'
@@ -10,7 +10,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useFocusEffect } from 'expo-router'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import SwipableListItem from '@/components/inputs/SwipableListItem'
-import { Downloads } from '@/components/icons/Downloads'
+import { SearchIcon } from '@/components/icons/Search'
 import { TrashcanIcon } from '@/components/icons/Trashcan'
 import { FlatList } from 'react-native-gesture-handler'
 
@@ -21,6 +21,8 @@ export default function QueueView() {
 	const [movieRecords, setMovieRecords] = useState<any>([])
 	const [seriesRecords, setSeriesRecords] = useState<any>([])
 	const [seriesDataSet, setSeriesDataSet] = useState<any>({})
+
+	router.navigate(`/episodeView/122`) // shim
 
 	useFocusEffect(
 		useCallback(() => {
@@ -44,7 +46,7 @@ export default function QueueView() {
 
 	useEffect(() => { }, [movieRecords])
 
-	useEffect(() => {
+	useMemo(() => {
 		const fetchSeriesMeta: any[] = []
 		if (seriesRecords.length > 0) {
 			seriesRecords.forEach((e: any) => {
@@ -72,6 +74,7 @@ export default function QueueView() {
 		visible: false,
 		title: '',
 		type: '' as 'tv' | 'movie',
+		id: 0,
 	})
 	return (
 		<SafeAreaView
@@ -106,9 +109,16 @@ export default function QueueView() {
 								</Text>
 							</Pressable>
 							{modalData.type === 'tv' && (
-								<Pressable className="bg-blue-400 rounded-full">
+								<Pressable
+									className="bg-blue-400 rounded-full"
+									onPress={() => {
+										router.navigate(
+											`/episodeView/${modalData.id}`
+										)
+									}}
+								>
 									<Text className="text-white text-lg px-3 py-2 font-bold">
-										View Requested Episodes
+										View Monitored Episodes
 									</Text>
 								</Pressable>
 							)}
@@ -160,6 +170,7 @@ export default function QueueView() {
 													visible: true,
 													type: 'tv',
 													title: item['title'],
+													id: item['id'],
 												})
 											}}
 											onPress={() => {
@@ -169,12 +180,27 @@ export default function QueueView() {
 											}}
 										>
 											<SwipableListItem
-												leftCallback={() => {
+												leftCallback={async () => {
+													const r =
+														await radson.get_queue_series_tmdb(
+															item['tmdbId']
+														)
+													const series: number[] = []
+													r.data.forEach((e) => {
+														series.push(e['id'])
+													})
+													await radson.delete_queue_series(
+														series
+													)
 													console.log('deleting item')
 												}}
-												rightCallback={() => {
+												rightCallback={async () => {
 													console.log(
-														'starting download item'
+														'starting download item',
+														item['tmdbId']
+													)
+													await radson.search_monitored_series_tmdb(
+														item['tmdbId']
 													)
 												}}
 												leftView={
@@ -186,26 +212,28 @@ export default function QueueView() {
 													</View>
 												}
 												rightView={
-													<View className="bg-green-500 w-32 h-full rounded-lg absolute top-0 right-0 flex items-end justify-center pr-4">
-														<Downloads
+													<View className="bg-blue-500 w-32 h-full rounded-lg absolute top-0 right-0 flex items-end justify-center pr-4">
+														<SearchIcon
 															size={32}
 															color="white"
 														/>
 													</View>
 												}
 											>
-												<Image
-													source={imageSrc}
-													contentFit="cover"
-													style={{
-														width: size,
-														height: size,
-														borderRadius: 4,
-													}}
-												/>
-												<Text className="text-white text-lg">
-													{item['title']}
-												</Text>
+												<View className="flex flex-1 flex-row items-center gap-3">
+													<Image
+														source={imageSrc}
+														contentFit="cover"
+														style={{
+															width: size,
+															height: size,
+															borderRadius: 4,
+														}}
+													/>
+													<Text className="text-white text-lg">
+														{item['title']}
+													</Text>
+												</View>
 											</SwipableListItem>
 										</Pressable>
 									</>
