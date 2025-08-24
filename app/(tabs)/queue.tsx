@@ -22,7 +22,7 @@ export default function QueueView() {
 	const [seriesRecords, setSeriesRecords] = useState<any>([])
 	const [seriesDataSet, setSeriesDataSet] = useState<any>({})
 
-	router.navigate(`/episodeView/122`) // shim
+	// router.navigate(`/episodeView/140`) // shim
 
 	useFocusEffect(
 		useCallback(() => {

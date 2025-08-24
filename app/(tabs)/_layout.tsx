@@ -12,7 +12,7 @@ export default function TabLayout() {
     const { width } = useWindowDimensions()
     return (
         <Tabs
-            initialRouteName="queue"
+            initialRouteName="trending"
             screenOptions={{
                 tabBarActiveTintColor: '#36909D',
                 tabBarStyle: {

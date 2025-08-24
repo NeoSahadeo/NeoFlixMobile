@@ -14,6 +14,7 @@ import { TrashcanIcon } from '@/components/icons/Trashcan'
 import { PlusIcon } from '@/components/icons/Plus'
 import { useEffect, useState } from 'react'
 import { Radson } from 'radson'
+import { router } from 'expo-router'
 
 const monitor = async (radson: Radson, localData: any, index: any) => {
     try {
@@ -103,68 +104,89 @@ export default function({
                     <View className="flex-1 items-start w-full mt-5">
                         <FlatList
                             data={seasonalPosters}
-                            key={`flatlist-${numColumns}`} // key forces full re-render on numColumns change
-                            keyExtractor={(e: any) => e.poster_path}
+                            keyExtractor={(e: any) => e['tmdbId']}
                             renderItem={({ item, index }) => {
                                 return (
                                     <View className="relative">
-                                        <Image
-                                            source={resolveImage(
-                                                item.poster_path,
-                                                'small'
-                                            )}
-                                            contentFit="cover"
-                                            style={{
-                                                width: miniSize * 0.9,
-                                                height: miniSize * 1.6,
-                                                margin: 3,
-                                                borderRadius: 7,
+                                        <Pressable
+                                            onPress={async () => {
+                                                try {
+                                                    const r =
+                                                        await radson.monitor_series_tmdb(
+                                                            localData['tmdbId'],
+                                                            true,
+                                                            [-1]
+                                                        )
+                                                    router.navigate(
+                                                        `/episodeView/${r.data['id']}`
+                                                    )
+                                                } catch (err) {
+                                                    console.log(err)
+                                                }
                                             }}
-                                        />
-                                        <Text className="text-white text-wrap max-w-32">
-                                            {item.name}
-                                        </Text>
-                                        {localData.seasons.filter(
-                                            (e) =>
-                                                e['seasonNumber'] ===
-                                                item['season_number']
-                                        )[0]['monitored'] &&
-                                            localData.id !== undefined ? (
-                                            <Pressable
-                                                onPress={async () => {
-                                                    await remove_monitor(
-                                                        radson,
-                                                        localData,
-                                                        item['season_number']
-                                                    )
+                                        >
+                                            <Image
+                                                source={resolveImage(
+                                                    item.poster_path,
+                                                    'small'
+                                                )}
+                                                contentFit="cover"
+                                                style={{
+                                                    width: miniSize * 0.9,
+                                                    height: miniSize * 1.6,
+                                                    margin: 3,
+                                                    borderRadius: 7,
+                                                }}
+                                            />
+                                            <Text className="text-white text-wrap max-w-32">
+                                                {item.name}
+                                            </Text>
+                                            {localData.seasons.filter(
+                                                (e) =>
+                                                    e['seasonNumber'] ===
+                                                    item['season_number']
+                                            )[0]['monitored'] &&
+                                                localData.id !== undefined ? (
+                                                <Pressable
+                                                    onPress={async () => {
+                                                        await remove_monitor(
+                                                            radson,
+                                                            localData,
+                                                            item[
+                                                            'season_number'
+                                                            ]
+                                                        )
 
-                                                    refreshFunc()
-                                                }}
-                                                className="absolute bg-red-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
-                                            >
-                                                <TrashcanIcon
-                                                    size={24}
-                                                    color={'white'}
-                                                />
-                                            </Pressable>
-                                        ) : (
-                                            <Pressable
-                                                onPress={async () => {
-                                                    await monitor(
-                                                        radson,
-                                                        localData,
-                                                        item['season_number']
-                                                    )
-                                                    refreshFunc()
-                                                }}
-                                                className="absolute bg-green-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
-                                            >
-                                                <PlusIcon
-                                                    size={24}
-                                                    color="white"
-                                                />
-                                            </Pressable>
-                                        )}
+                                                        refreshFunc()
+                                                    }}
+                                                    className="absolute bg-red-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
+                                                >
+                                                    <TrashcanIcon
+                                                        size={24}
+                                                        color={'white'}
+                                                    />
+                                                </Pressable>
+                                            ) : (
+                                                <Pressable
+                                                    onPress={async () => {
+                                                        await monitor(
+                                                            radson,
+                                                            localData,
+                                                            item[
+                                                            'season_number'
+                                                            ]
+                                                        )
+                                                        refreshFunc()
+                                                    }}
+                                                    className="absolute bg-green-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
+                                                >
+                                                    <PlusIcon
+                                                        size={24}
+                                                        color="white"
+                                                    />
+                                                </Pressable>
+                                            )}
+                                        </Pressable>
                                     </View>
                                 )
                             }}

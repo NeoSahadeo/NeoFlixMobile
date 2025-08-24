@@ -22,7 +22,7 @@ export default function HomePage() {
     const { apiKey } = useSession()
     const [posters, setPosters] = useState([])
     const [trendingType, setTrendingType] = useState<'tv' | 'movie' | 'all'>(
-        'all'
+        'tv'
     )
     const [timeWindow, setTimeWindow] = useState<'day' | 'week'>('day')
 
@@ -174,7 +174,6 @@ export default function HomePage() {
                     </Text>
                 </View>
             )}
-            {/* <View className="w-full h-28 bg-transparent"></View> */}
         </SafeAreaView>
     )
 }
