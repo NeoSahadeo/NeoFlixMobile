@@ -12,9 +12,9 @@ import { Image } from 'expo-image'
 import { resolveImage } from '@/scripts/urlUtils'
 import { TrashcanIcon } from '@/components/icons/Trashcan'
 import { PlusIcon } from '@/components/icons/Plus'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Radson } from 'radson'
-import { router } from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 
 const monitor = async (radson: Radson, localData: any, index: any) => {
     try {
@@ -41,7 +41,7 @@ export default function({
     localData: any
     tmdbData: any
     radson: Radson
-    refreshFunc: () => void
+    refreshFunc: () => Promise<void>
 }) {
     const [seasonalPosters, setSeasonalPosters] = useState()
 
@@ -60,10 +60,37 @@ export default function({
         setColSize(Math.floor(width / numColumns))
     }, [width])
 
-    useEffect(() => {
+    useMemo(() => {
         if (!tmdbData && !localData) return
-        setSeasonalPosters(tmdbData.seasons)
+            ; (async () => {
+                let monitored = new Set()
+                try {
+                    for (let x = 0; x < tmdbData.seasons.length; x++) {
+                        const r = await radson.get_episodes({
+                            series_id: localData['id'],
+                            season_number: x,
+                        })
+                        r.data.forEach((e) => {
+                            if (e['monitored']) {
+                                monitored.add(e['seasonNumber'])
+                            }
+                        })
+                    }
+                    monitored.forEach((_, i) => {
+                        tmdbData.seasons[i]['monitored'] = 'true'
+                    })
+                } catch (err) {
+                    console.log(err)
+                }
+                setSeasonalPosters(tmdbData.seasons)
+            })()
     }, [tmdbData])
+
+    useFocusEffect(
+        useCallback(() => {
+            refreshFunc()
+        }, [])
+    )
 
     return (
         <SafeAreaView
@@ -111,15 +138,96 @@ export default function({
                                         <Pressable
                                             onPress={async () => {
                                                 try {
-                                                    const r =
-                                                        await radson.monitor_series_tmdb(
-                                                            localData['tmdbId'],
-                                                            true,
-                                                            [-1]
+                                                    let id = localData['id']
+                                                    let rd: () => void
+                                                    if (id === undefined) {
+                                                        const r =
+                                                            await radson.monitor_series_tmdb(
+                                                                localData[
+                                                                'tmdbId'
+                                                                ],
+                                                                true,
+                                                                [
+                                                                    item[
+                                                                    'season_number'
+                                                                    ],
+                                                                ]
+                                                            )
+                                                        const requestData =
+                                                            async () => {
+                                                                const d =
+                                                                    await radson.get_episodes(
+                                                                        {
+                                                                            series_id:
+                                                                                r
+                                                                                    .data[
+                                                                                'id'
+                                                                                ],
+                                                                            season_number:
+                                                                                item[
+                                                                                'season_number'
+                                                                                ],
+                                                                        }
+                                                                    )
+
+                                                                const eps =
+                                                                    d.data.map(
+                                                                        (e) =>
+                                                                            e[
+                                                                            'id'
+                                                                            ]
+                                                                    )
+                                                                if (
+                                                                    eps ===
+                                                                    undefined ||
+                                                                    eps.length ===
+                                                                    0
+                                                                ) {
+                                                                    setTimeout(
+                                                                        async () => {
+                                                                            await requestData()
+                                                                        },
+                                                                        250
+                                                                    )
+                                                                }
+
+                                                                if (
+                                                                    eps.length >
+                                                                    0
+                                                                ) {
+                                                                    await radson.monitor_series_individual(
+                                                                        eps,
+                                                                        false
+                                                                    )
+                                                                    return r
+                                                                        .data[
+                                                                        'id'
+                                                                    ]
+                                                                }
+                                                            }
+                                                        rd = async () => {
+                                                            id =
+                                                                await requestData()
+                                                            if (id) {
+                                                                router.navigate(
+                                                                    `/episodeView/${item['season_number']}/${id}`
+                                                                )
+                                                            } else {
+                                                                setTimeout(
+                                                                    async () =>
+                                                                        await rd(),
+                                                                    250
+                                                                )
+                                                            }
+                                                        }
+                                                    }
+                                                    if (id) {
+                                                        router.navigate(
+                                                            `/episodeView/${item['season_number']}/${id}`
                                                         )
-                                                    router.navigate(
-                                                        `/episodeView/${r.data['id']}`
-                                                    )
+                                                    } else {
+                                                        await rd()
+                                                    }
                                                 } catch (err) {
                                                     console.log(err)
                                                 }
@@ -141,12 +249,7 @@ export default function({
                                             <Text className="text-white text-wrap max-w-32">
                                                 {item.name}
                                             </Text>
-                                            {localData.seasons.filter(
-                                                (e) =>
-                                                    e['seasonNumber'] ===
-                                                    item['season_number']
-                                            )[0]['monitored'] &&
-                                                localData.id !== undefined ? (
+                                            {item['monitored'] !== undefined ? (
                                                 <Pressable
                                                     onPress={async () => {
                                                         await remove_monitor(
@@ -157,7 +260,7 @@ export default function({
                                                             ]
                                                         )
 
-                                                        refreshFunc()
+                                                        await refreshFunc()
                                                     }}
                                                     className="absolute bg-red-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
                                                 >
@@ -169,14 +272,43 @@ export default function({
                                             ) : (
                                                 <Pressable
                                                     onPress={async () => {
-                                                        await monitor(
-                                                            radson,
-                                                            localData,
-                                                            item[
-                                                            'season_number'
-                                                            ]
-                                                        )
-                                                        refreshFunc()
+                                                        try {
+                                                            // umonitor series before readding,
+                                                            // because monitored series with
+                                                            // zero monitored episodes
+                                                            // require this to happen.
+                                                            //
+                                                            // could rewrite as adding indiviual episodes
+                                                            if (
+                                                                localData[
+                                                                'seasons'
+                                                                ][index][
+                                                                'monitored'
+                                                                ]
+                                                            ) {
+                                                                await radson.monitor_series_tmdb(
+                                                                    localData.tmdbId,
+                                                                    false,
+                                                                    [
+                                                                        item[
+                                                                        'season_number'
+                                                                        ],
+                                                                    ]
+                                                                )
+                                                            }
+                                                            await radson.monitor_series_tmdb(
+                                                                localData.tmdbId,
+                                                                true,
+                                                                [
+                                                                    item[
+                                                                    'season_number'
+                                                                    ],
+                                                                ]
+                                                            )
+                                                            await refreshFunc()
+                                                        } catch (err) {
+                                                            console.log(err)
+                                                        }
                                                     }}
                                                     className="absolute bg-green-600 px-3 py-3 flex items-center right-0 mr-3 rounded-full mb-3 bottom-0"
                                                 >

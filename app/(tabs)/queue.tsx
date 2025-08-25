@@ -113,7 +113,7 @@ export default function QueueView() {
 									className="bg-blue-400 rounded-full"
 									onPress={() => {
 										router.navigate(
-											`/episodeView/${modalData.id}`
+											`/episodeView/missing/${modalData.id}`
 										)
 									}}
 								>

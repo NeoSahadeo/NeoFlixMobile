@@ -9,7 +9,9 @@ const data = [
 ]
 
 export default ({ value, setValue }: any) => {
-    const [display, setDisplay] = useState('All')
+    const [display, setDisplay] = useState(
+        data.filter((e) => e['value'] === value)[0]['label']
+    )
 
     useMemo(() => {
         const x: any = data.filter((e) => e.value == value)[0]

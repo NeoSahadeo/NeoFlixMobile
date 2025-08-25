@@ -1,5 +1,5 @@
 import { useSession } from '@/contexts/RadsonContext'
-import { useLocalSearchParams } from 'expo-router'
+import { Route, useLocalSearchParams } from 'expo-router'
 import { Radson } from 'radson'
 import React, { useEffect, useState, useMemo } from 'react'
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,9 +21,15 @@ import {
 import SwipableListItem from '@/components/inputs/SwipableListItem'
 import { TrashcanIcon } from '@/components/icons/Trashcan'
 import { SearchIcon } from '@/components/icons/Search'
+import { Bookmark } from '@/components/icons/Bookmark'
+
+type SearchParams = {
+	id: number
+	type: 'missing' | 'all' | number // type of number is the season number
+}
 
 export default function() {
-	const { id } = useLocalSearchParams()
+	const { id, type } = useLocalSearchParams() as any as SearchParams
 	const { width } = useWindowDimensions()
 
 	const { radson }: { radson: Radson } = useSession()
@@ -34,26 +40,38 @@ export default function() {
 	const [imgSrc, setImgSrc] = useState(null)
 	const [modalVisible, setModalVisible] = useState(false)
 
-	useMemo(() => {
-		; (async () => {
-			try {
+	const getData = async () => {
+		try {
+			const r = await radson.fetch_local_data('series', 'local', id)
+			setLocalData(r.data)
+			setImgSrc(
+				r.data['images']
+					.filter((e) => Object.keys(e).includes('coverType'))
+					.filter((e) => e['coverType'] === 'poster')[0]['remoteUrl']
+			)
+
+			if (type === 'missing') {
 				const d = await radson.get_missing_series({
-					episode_id: Number(id),
+					series_id: Number(id),
 				})
 				setRecords(d.data)
-
-				const r = await radson.fetch_local_data('series', 'local', id)
-				setLocalData(r.data)
-				setImgSrc(
-					r.data['images']
-						.filter((e) => Object.keys(e).includes('coverType'))
-						.filter((e) => e['coverType'] === 'poster')[0][
-					'remoteUrl'
-					]
-				)
-			} catch (err) {
-				console.log(err)
 			}
+			if (Number(type) > 0) {
+				const d = await radson.get_episodes({
+					series_id: Number(id),
+					season_number: Number(type),
+				})
+				setRecords(d.data)
+				// console.log(JSON.stringify(r.data))
+			}
+		} catch (err) {
+			console.log(err)
+		}
+	}
+
+	useMemo(() => {
+		; (async () => {
+			await getData()
 		})()
 	}, [])
 
@@ -92,6 +110,7 @@ export default function() {
 								<View style={{ height: 10 }} />
 							)}
 							renderItem={({ item }: any) => {
+								// console.log(item)
 								return (
 									<View className="bg-gray-900">
 										<Text className="text-white text-lg">
@@ -99,7 +118,10 @@ export default function() {
 											{item['seasonNumber']}
 										</Text>
 										<Text className="text-white text-lg">
-											Episodes: {item['episodeNumbers']}
+											Episode(s):{' '}
+											{item['mappedEpisodeInfo']
+												.map((e) => e['episodeNumber'])
+												.join(' ')}
 										</Text>
 										<Text className="text-white text-lg">
 											Title: {item['seriesTitle']}
@@ -163,29 +185,84 @@ export default function() {
 			</View>
 			<GestureHandlerRootView className="flex-1">
 				<ScrollView>
-					{/* <View className="ml-auto mr-auto"> */}
-					{/* 	<Image */}
-					{/* 		source={imgSrc} */}
-					{/* 		contentFit="cover" */}
-					{/* 		style={{ */}
-					{/* 			width: width * 0.9 * imgScale, */}
-					{/* 			height: width * 1.6 * imgScale, */}
-					{/* 			borderRadius: 4, */}
-					{/* 		}} */}
-					{/* 	/> */}
-					{/* </View> */}
+					<View className="ml-auto mr-auto">
+						<Image
+							source={imgSrc}
+							contentFit="cover"
+							style={{
+								width: width * 0.9 * imgScale,
+								height: width * 1.6 * imgScale,
+								borderRadius: 4,
+							}}
+						/>
+					</View>
 					{records.map((item) => (
 						<View className="mt-5" key={item['id']}>
 							<SwipableListItem
 								leftCallback={async () => {
-									console.log('delete item')
-									await radson.monitor_series_individual(
-										[item['id']],
-										false
-									)
-									setRecords((v) =>
-										v.filter((e) => e['id'] !== item['id'])
-									)
+									if (item['monitored']) {
+										console.log('delete item')
+										await radson.monitor_series_individual(
+											[item['id']],
+											false
+										)
+										if (type === 'missing')
+											setRecords((v) =>
+												v.filter(
+													(e) =>
+														e['id'] !== item['id']
+												)
+											)
+									} else {
+										console.log('monitoring item')
+										console.log(
+											!localData!['seasons'].filter(
+												(e) =>
+													e['seasonNumber'] ===
+													item['seasonNumber']
+											)[0]['monitored']
+										)
+										if (
+											!localData!['seasons'].filter(
+												(e) =>
+													e['seasonNumber'] ===
+													item['seasonNumber']
+											)[0]['monitored']
+										) {
+											const eps: number[] = []
+											records.forEach((e) => {
+												if (item[id] !== e['id'])
+													eps.push(e['id'])
+											})
+
+											await radson.monitor_series_tmdb(
+												localData!['tmdbId'],
+												true,
+												[item['seasonNumber']]
+											)
+
+											try {
+												for (
+													let x = 0;
+													x < eps.length;
+													x++
+												) {
+													// weird bug where it does not update correctly.
+													await radson.monitor_series_individual(
+														[eps[x]],
+														false
+													)
+												}
+											} catch (err) {
+												console.log(err)
+											}
+										}
+										await radson.monitor_series_individual(
+											[item['id']],
+											true
+										)
+									}
+									await getData()
 								}}
 								rightCallback={async () => {
 									console.log('start search')
@@ -203,9 +280,18 @@ export default function() {
 									}
 								}}
 								leftView={
-									<View className="bg-red-500 w-32 h-full rounded-lg absolute top-0 left-0 flex items-start justify-center pl-4">
-										<TrashcanIcon size={32} color="white" />
-									</View>
+									item['monitored'] ? (
+										<View className="bg-red-500 w-32 h-full rounded-lg absolute top-0 left-0 flex items-start justify-center pl-4">
+											<TrashcanIcon
+												size={32}
+												color="white"
+											/>
+										</View>
+									) : (
+										<View className="bg-orange-500 w-32 h-full rounded-lg absolute top-0 left-0 flex items-start justify-center pl-4">
+											<Bookmark size={32} color="white" />
+										</View>
+									)
 								}
 								rightView={
 									<View className="bg-blue-500 w-32 h-full rounded-lg absolute top-0 right-0 flex items-end justify-center pr-4">
@@ -213,7 +299,15 @@ export default function() {
 									</View>
 								}
 							>
-								<View className="flex flex-row flex-1">
+								<View className="flex flex-row flex-1 relative">
+									{item['monitored'] && (
+										<View className="absolute top-0 right-0 z-50">
+											<Bookmark
+												size={15}
+												color={'#f97316'}
+											/>
+										</View>
+									)}
 									<Text className="min-w-20 text-white font-bold text-lg">
 										S{item.seasonNumber}E
 										{item.episodeNumber}

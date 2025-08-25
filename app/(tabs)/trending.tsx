@@ -19,6 +19,9 @@ import { SearchIcon } from '@/components/icons/Search'
 import { useDebouncedCallback } from 'use-debounce'
 
 export default function HomePage() {
+    // shim
+    // router.navigate('/episodeView/1/148')
+
     const { apiKey } = useSession()
     const [posters, setPosters] = useState([])
     const [trendingType, setTrendingType] = useState<'tv' | 'movie' | 'all'>(

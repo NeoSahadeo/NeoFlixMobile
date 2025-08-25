@@ -21,44 +21,41 @@ export default function ViewerScreen() {
     const [loading, setLoading] = useState(true)
     const { apiKey } = useSession()
 
-    const refreshData = () => {
-        ; (async () => {
-            try {
-                let tmdb_resp: AxiosResponse<any, any> = null as any
-                let local_resp: AxiosResponse<any, any> = null as any
-                if (type === 'tv') {
-                    tmdb_resp = await axios.get(
-                        'https://api.themoviedb.org/3/tv/' + id,
-                        { headers: { Authorization: `Bearer ${apiKey}` } }
-                    )
-                    local_resp = (await radson?.lookup_sonarr_tmdb(
-                        Number(id)
-                    )) as any
-                } else {
-                    tmdb_resp = await axios.get(
-                        'https://api.themoviedb.org/3/movie/' + id,
-                        { headers: { Authorization: `Bearer ${apiKey}` } }
-                    )
-                    local_resp = (await radson?.lookup_radarr_tmdb(
-                        Number(id)
-                    )) as any
+    const refreshData = async () => {
+        try {
+            let tmdb_resp: AxiosResponse<any, any> = null as any
+            let local_resp: AxiosResponse<any, any> = null as any
+            if (type === 'tv') {
+                tmdb_resp = await axios.get(
+                    'https://api.themoviedb.org/3/tv/' + id,
+                    { headers: { Authorization: `Bearer ${apiKey}` } }
+                )
+                local_resp = (await radson?.lookup_sonarr_tmdb(
+                    Number(id)
+                )) as any
+            } else {
+                tmdb_resp = await axios.get(
+                    'https://api.themoviedb.org/3/movie/' + id,
+                    { headers: { Authorization: `Bearer ${apiKey}` } }
+                )
+                local_resp = (await radson?.lookup_radarr_tmdb(
+                    Number(id)
+                )) as any
 
-                    // fix because the radarr api is broken.
-                    const r = await radson?.fetch_local_data(
-                        'movie',
-                        'tmdb',
-                        local_resp.data['tmdbId']
-                    )
-                    if (r?.data)
-                        local_resp.data['monitored'] = r?.data['monitored']
-                }
-                if (tmdb_resp) setTMDBData(tmdb_resp.data)
-                if (local_resp) setLocalData(local_resp.data)
-                setLoading(false)
-            } catch (err) {
-                console.log(err)
+                // fix because the radarr api is broken.
+                const r = await radson?.fetch_local_data(
+                    'movie',
+                    'tmdb',
+                    local_resp.data['tmdbId']
+                )
+                if (r?.data) local_resp.data['monitored'] = r?.data['monitored']
             }
-        })()
+            if (tmdb_resp) setTMDBData(tmdb_resp.data)
+            if (local_resp) setLocalData(local_resp.data)
+            setLoading(false)
+        } catch (err) {
+            console.log(err)
+        }
     }
 
     useEffect(() => {
@@ -97,7 +94,9 @@ export default function ViewerScreen() {
     }, [])
 
     useEffect(() => {
-        refreshData()
+        ; (async () => {
+            await refreshData()
+        })()
     }, [radson])
 
     if (loading) {

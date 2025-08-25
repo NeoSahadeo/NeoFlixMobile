@@ -5,7 +5,7 @@ export default function ViewerLayout() {
 	return (
 		<Stack>
 			<Stack.Screen
-				name="[id]"
+				name="[type]/[id]"
 				options={{
 					headerStyle: {
 						backgroundColor: Colors.backgroundPrimary,
